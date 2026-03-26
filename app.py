@@ -59,8 +59,8 @@ def load_pincode_master():
     df_pin["state"] = df_pin["state"]
 
     # city fallback
-    if "officename" in df_pin.columns:
-        df_pin["city"] = df_pin["officename"]
+    if "regionname" in df_pin.columns:
+        df_pin["city"] = df_pin["regionname"]
     elif "district" in df_pin.columns:
         df_pin["city"] = df_pin["district"]
     else:
@@ -276,8 +276,8 @@ def load_csv(file_bytes: bytes) -> pd.DataFrame:
     matched = df["lat"].notna().sum()
     unmatched = df["lat"].isna().sum()
 
-    if unmatched > 0:
-        st.sidebar.warning(f"⚠ {unmatched:,} pincodes not mapped and will be skipped.")
+    # if unmatched > 0:
+    #     st.sidebar.warning(f"⚠ {unmatched:,} pincodes not mapped and will be skipped.")
 
     # ✅ drop AFTER merge
     df = df.dropna(subset=["lat", "lon"])
@@ -320,25 +320,14 @@ with st.sidebar:
     st.markdown("---")
 
     # Data source
-    st.markdown('<div class="section-title">Data Source</div>', unsafe_allow_html=True)
-    uploaded = st.file_uploader(
-        "Upload CSV",
-        type=["csv"],
-        help="Required columns: pin_code, networth",
-    )
 
     # Default to bundled t.csv if no upload
     default_csv = os.path.join(os.path.dirname(__file__), "t.csv")
-    if uploaded:
-        file_bytes = uploaded.read()
-        data_label = uploaded.name
-    elif os.path.exists(default_csv):
+    if os.path.exists(default_csv):
         with open(default_csv, "rb") as f:
             file_bytes = f.read()
         data_label = "t.csv (bundled)"
-    else:
-        st.info("Upload a CSV to begin.")
-        st.stop()
+
 
     df_full = load_csv(file_bytes)
     st.markdown(
@@ -351,19 +340,28 @@ with st.sidebar:
     st.markdown('<div class="section-title">Map View</div>', unsafe_allow_html=True)
     map_view = st.radio(
         "Zoom Level",
-        options=["India (All States)", "State / City"],
+        options=["India (All States)", "State", "City"],
         index=0,
         horizontal=False,
     )
 
     # Geography filter — only shown for State/City view
     all_states = sorted(df_full["state"].dropna().unique())
-    if map_view == "State / City" and all_states:
-        selected_states = st.multiselect("State / Circle", options=all_states, default=all_states)
+    all_city = sorted(df_full["city"].dropna().unique())
+
+    if map_view == "State" and all_states:
+        selected_states = st.multiselect("State", options=all_states, default=all_states)
         if not selected_states:
             selected_states = all_states
     else:
         selected_states = all_states
+
+    if  map_view == "City" and all_city:
+        selected_city = st.multiselect("City", options=all_city)
+        if not selected_city:
+            selected_city = all_city
+    else:
+        selected_city = all_city
 
     st.markdown("---")
 
@@ -410,6 +408,7 @@ with st.sidebar:
 # ─────────────────────────────────────────────
 df = df_full[
     df_full["state"].isin(selected_states) &
+    df_full["city"].isin(selected_city) &
     df_full["wealth_band"].isin(selected_bands) &
     (df_full["networth_cr"] >= nw_threshold)
 ].copy()
@@ -675,8 +674,8 @@ with b3:
         title=dict(text="Networth Distribution (₹ Cr)", font=dict(color="#E8E4D8", size=12, family="Syne")),
         paper_bgcolor=CHART_BG, plot_bgcolor=CHART_BG,
         font=dict(color=FONT_COLOR, family="DM Mono"),
-        xaxis=dict(showgrid=False, title="₹ Crore", titlefont=dict(size=10), color=FONT_COLOR, linecolor=AXIS_COLOR),
-        yaxis=dict(showgrid=False, title="Count",   titlefont=dict(size=10), color=FONT_COLOR),
+        xaxis=dict(showgrid=False, title=dict(text="₹ Crore", font=dict(size=10)), color=FONT_COLOR, linecolor=AXIS_COLOR),
+        yaxis=dict(showgrid=False, title=dict(text="Count", font=dict(size=10)), color=FONT_COLOR),
         margin=dict(l=10, r=10, t=36, b=10), height=260, bargap=0.04,
     )
     st.plotly_chart(fig_hist, use_container_width=True)
