@@ -428,17 +428,27 @@ col_logo, col_title = st.columns([1, 5])
 with col_logo:
     if LOGO_B64:
         st.markdown(
-            f'<div style="padding-top:6px;">'
+            f'<div style="padding-top:18px;">'
             f'<img src="data:image/jpeg;base64,{LOGO_B64}" style="height:44px;object-fit:contain;">'
             f'</div>',
             unsafe_allow_html=True,
         )
 with col_title:
     st.markdown(
-        '<h2 style="margin:0;padding-top:4px;background:linear-gradient(135deg,#C9A84C,#F0D898);'
-        '-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">'
-        'HNI Density · India Pincode Heatmap</h2>',
-        unsafe_allow_html=True,
+    """
+    <h2 style="
+        margin: 0;
+        padding-top: 18px;
+        padding-bottom: 4px;
+        line-height: 1.3;
+        background: linear-gradient(135deg,#C9A84C,#F0D898);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    ">
+        HNI Density · India Pincode Heatmap
+    </h2>
+    """,
+    unsafe_allow_html=True,
     )
 
 st.markdown(
